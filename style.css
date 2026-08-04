@@ -218,6 +218,7 @@ h1, h2, h3, p { margin: 0; }
 .timeline-date { font-size: 11px; font-weight: 700; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.03em; }
 .timeline-note { font-size: 13.5px; margin-top: 4px; line-height: 1.5; }
 .timeline-photo { width: 68px; height: 68px; border-radius: var(--radius-sm); object-fit: cover; margin: 8px 6px 0 0; }
+.timeline-photo-link { display: inline-block; text-decoration: none; color: inherit; }
 
 .primary-button { background: var(--color-secondary); color: #1A1300; font-weight: 700; font-size: 14.5px; padding: 14px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; gap: 8px; }
 .primary-button:active { background: #D68A0E; }

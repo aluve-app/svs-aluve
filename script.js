@@ -67,6 +67,26 @@ const IdGen = {
 /* ============================================================
    ICONS (dipakai di konten yang di-render JS)
    ============================================================ */
+/* ============================================================
+   CLOUDINARY THUMBNAIL HELPER
+   ============================================================
+   Foto disimpan di Cloudinary dalam ukuran penuh (hasil kompresi
+   client ±1280px), tapi di daftar/timeline cuma perlu ditampilkan
+   kecil (±68px). Kalau langsung pakai url aslinya, browser tetap
+   MENGUNDUH file penuh lalu mengecilkannya via CSS — boros bandwidth,
+   yang berarti boros "credit" gratis Cloudinary.
+
+   Fungsi ini menyisipkan instruksi resize LANGSUNG DI URL-nya
+   (fitur bawaan Cloudinary, gratis dipakai dalam kuota transformasi) —
+   supaya yang benar-benar diunduh browser sudah versi kecil.
+   Foto ukuran PENUH tetap ada & bisa dibuka kalau diklik/di-zoom.
+   ============================================================ */
+function cloudinaryThumb(url, size) {
+  if (!url || url.indexOf('/upload/') === -1) return url; // bukan url Cloudinary, kembalikan apa adanya
+  const px = size || 150;
+  return url.replace('/upload/', '/upload/w_' + px + ',h_' + px + ',c_fill,q_auto,f_auto/');
+}
+
 const Icons = {
   pin: '<svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
   folder: '<svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
@@ -763,7 +783,9 @@ const TimelineView = {
       item.className = 'timeline-item';
       let photosHtml = '';
       if (a.photos && a.photos.length > 0) {
-        photosHtml = a.photos.map((p) => '<img class="timeline-photo" src="' + p.url + '" alt="Foto kunjungan" loading="lazy" />').join('');
+        photosHtml = a.photos.map((p) =>
+          '<a class="timeline-photo-link" href="' + p.url + '" target="_blank" rel="noopener"><img class="timeline-photo" src="' + cloudinaryThumb(p.url, 150) + '" alt="Foto kunjungan" loading="lazy" /></a>'
+        ).join('');
       }
       const tempLabel = a.temperature ? ' · Suhu: ' + a.temperature : '';
       item.innerHTML =
