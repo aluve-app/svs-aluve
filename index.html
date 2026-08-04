@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16294D">
+<title>SVS — Sales Aluve</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #16294D;
+    --navy-2: #223A66;
+    --amber: #E8A33D;
+    --amber-dark: #C9832A;
+    --teal: #2F9E6E;
+    --red: #C75146;
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --line: #E2E6EE;
+    --text: #16294D;
+    --muted: #6B7688;
+    --mono: 'IBM Plex Mono', monospace;
+    --disp: 'Space Grotesk', sans-serif;
+    --body: 'Inter', -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--body); }
+  body { overscroll-behavior-y: none; }
+  h1, h2, h3 { font-family: var(--disp); margin: 0; }
+  .hidden { display: none !important; }
+  #app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg); position: relative; padding-bottom: 100px; }
+
+  /* ===== App bar ===== */
+  .appbar {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--navy); color: #fff;
+    padding: 14px 16px calc(14px + env(safe-area-inset-top, 0px));
+    padding-top: max(14px, env(safe-area-inset-top, 0px));
+    display: flex; align-items: center; gap: 12px;
+  }
+  .appbar h1 { font-size: 18px; font-weight: 700; flex: 1; }
+  .appbar .sub { font-size: 11.5px; color: #A9B7D6; font-weight: 500; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 10px; border: none;
+    background: rgba(255,255,255,0.12); color: #fff; font-size: 18px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    flex-shrink: 0;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.22); }
+
+  /* ===== Login ===== */
+  #view-login { display: flex; flex-direction: column; justify-content: center; min-height: 100vh; padding: 32px 24px; }
+  .login-brand { text-align: center; margin-bottom: 40px; }
+  .login-brand .mark {
+    width: 56px; height: 56px; border-radius: 16px; background: var(--navy);
+    margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;
+    color: var(--amber); font-family: var(--disp); font-weight: 700; font-size: 22px;
+  }
+  .login-brand h1 { font-size: 24px; color: var(--navy); }
+  .login-brand p { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+
+  /* ===== Form controls ===== */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+  input, select, textarea {
+    width: 100%; padding: 13px 14px; border: 1.5px solid var(--line);
+    border-radius: 10px; background: var(--surface); color: var(--text);
+    font-size: 15px; font-family: var(--body);
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--navy); }
+  textarea { resize: vertical; min-height: 70px; }
+  .btn {
+    width: 100%; padding: 14px; border-radius: 12px; border: none;
+    font-size: 15px; font-weight: 700; font-family: var(--body); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary { background: var(--amber); color: #1A1300; }
+  .btn-primary:active { background: var(--amber-dark); }
+  .btn-primary:disabled { opacity: 0.5; }
+  .btn-ghost { background: transparent; color: var(--navy); border: 1.5px solid var(--line); }
+  .error-text { color: var(--red); font-size: 12.5px; margin-top: 8px; min-height: 16px; }
+
+  /* ===== Content ===== */
+  .content { padding: 16px; }
+  .search-row { display: flex; gap: 8px; padding: 12px 16px 8px; }
+  .search-row input { flex: 1; }
+  .chips { display: flex; gap: 8px; padding: 0 16px 12px; overflow-x: auto; }
+  .chip {
+    padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--line);
+    background: var(--surface); font-size: 12.5px; font-weight: 600; color: var(--muted);
+    white-space: nowrap; cursor: pointer; flex-shrink: 0;
+  }
+  .chip.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+  /* ===== Project card ===== */
+  .card {
+    background: var(--surface); border-radius: 14px; padding: 14px 16px;
+    margin-bottom: 10px; border-left: 4px solid var(--line); cursor: pointer;
+    box-shadow: 0 1px 2px rgba(22,41,77,0.04);
+  }
+  .card.status-Aktif { border-left-color: var(--teal); }
+  .card.status-Perlu-Perhatian { border-left-color: var(--amber); }
+  .card.status-Stale { border-left-color: var(--red); }
+  .card.status-Won { border-left-color: var(--teal); }
+  .card.status-Lost { border-left-color: var(--muted); }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card h3 { font-size: 15px; font-weight: 700; line-height: 1.3; }
+  .card .addr { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  .badge {
+    font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .badge.stage { background: #EAF0FC; color: var(--navy-2); }
+  .card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .card-meta .health { font-size: 11px; font-weight: 600; }
+  .health.Aktif { color: var(--teal); }
+  .health.Perlu-Perhatian { color: var(--amber-dark); }
+  .health.Stale { color: var(--red); }
+  .card-meta .date { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+  .empty-state { text-align: center; padding: 60px 24px; color: var(--muted); }
+  .empty-state .emoji { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13.5px; line-height: 1.5; }
+
+  /* ===== FAB ===== */
+  .fab {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(calc(-50% + 200px));
+    width: 56px; height: 56px; border-radius: 18px; background: var(--amber);
+    border: none; color: #1A1300; font-size: 26px; display: flex; align-items: center;
+    justify-content: center; box-shadow: 0 6px 16px rgba(232,163,61,0.45); cursor: pointer;
+    z-index: 30;
+  }
+  @media (max-width: 480px) { .fab { transform: none; right: 20px; left: auto; } }
+
+  /* ===== Detail view ===== */
+  .info-card {
+    background: var(--surface); border-radius: 14px; padding: 18px; margin: 16px;
+    box-shadow: 0 1px 2px rgba(22,41,77,0.04);
+  }
+  .info-card h2 { font-size: 18px; margin-bottom: 4px; }
+  .info-card .addr { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .info-item .label { font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+  .info-item .value { font-size: 13.5px; font-weight: 600; margin-top: 2px; }
+  .stage-pill {
+    display: inline-block; margin-top: 12px; padding: 6px 14px; border-radius: 20px;
+    background: var(--navy); color: #fff; font-size: 12.5px; font-weight: 700;
+  }
+
+  .section-title {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 16px 10px; margin-top: 6px;
+  }
+  .section-title h3 { font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .link-btn { background: none; border: none; color: var(--navy-2); font-size: 12.5px; font-weight: 700; cursor: pointer; }
+
+  .contact-row {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface); border-radius: 12px; padding: 12px 14px; margin: 0 16px 8px;
+  }
+  .contact-row .name { font-size: 13.5px; font-weight: 700; }
+  .contact-row .role { font-size: 11.5px; color: var(--muted); }
+  .contact-row a { color: var(--navy-2); font-size: 12px; font-weight: 700; text-decoration: none; }
+
+  /* ===== Timeline ===== */
+  .timeline { padding: 4px 16px 20px; position: relative; }
+  .tl-item { position: relative; padding-left: 24px; padding-bottom: 22px; }
+  .tl-item::before {
+    content: ''; position: absolute; left: 5px; top: 4px; bottom: -4px; width: 2px; background: var(--line);
+  }
+  .tl-item:last-child::before { display: none; }
+  .tl-dot {
+    position: absolute; left: 0; top: 3px; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--navy); border: 2px solid var(--bg);
+  }
+  .tl-card { background: var(--surface); border-radius: 12px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(22,41,77,0.04); }
+  .tl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .tl-type { font-size: 13.5px; font-weight: 700; }
+  .tl-date { font-size: 10.5px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+  .tl-note { font-size: 13px; color: var(--text); margin-top: 5px; line-height: 1.45; }
+  .tl-stage { display: inline-block; margin-top: 8px; font-size: 10.5px; font-weight: 700; color: var(--navy-2); background: #EAF0FC; padding: 2px 9px; border-radius: 20px; }
+  .tl-photos { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; }
+  .tl-photos img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+
+  /* ===== Forms (project/activity) ===== */
+  .form-wrap { padding: 16px; padding-bottom: 24px; }
+  .form-section-label { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin: 18px 0 10px; }
+  .form-section-label:first-child { margin-top: 4px; }
+  .photo-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+  .photo-thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; background: var(--line); }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb .status { position: absolute; inset: 0; background: rgba(0,0,0,0.45); color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px; }
+  .photo-add {
+    width: 72px; height: 72px; border-radius: 10px; border: 1.5px dashed var(--line);
+    display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 24px; cursor: pointer; flex-shrink: 0;
+  }
+  .gps-status { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .gps-status.ok { color: var(--teal); }
+
+  /* ===== Modal ===== */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(22,41,77,0.5); z-index: 50;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .modal-sheet {
+    background: var(--surface); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)); max-height: 85vh; overflow-y: auto;
+  }
+  .modal-sheet h3 { font-size: 16px; margin-bottom: 14px; }
+
+  /* ===== Toast ===== */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--navy); color: #fff; padding: 12px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; z-index: 100; max-width: 85%; text-align: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2); transition: opacity 0.2s, transform 0.2s;
+  }
+  #toast.err { background: var(--red); }
+  #toast.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(10px); }
+
+  .spinner {
+    width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .center-loading { display: flex; justify-content: center; padding: 60px 0; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="view-login">
+    <div class="login-brand">
+      <div class="mark">SA</div>
+      <h1>Sales Visit System</h1>
+      <p>Aluve — Aluminium, Curtain Wall &amp; Facade</p>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input id="login-email" type="email" autocomplete="username" placeholder="nama@aluve.com">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="login-password" type="password" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Masuk</button>
+    <p class="error-text" id="login-error"></p>
+  </div>
+
+  <!-- ===================== PROJECT LIST ===================== -->
+  <div id="view-list" class="hidden">
+    <div class="appbar">
+      <div>
+        <h1>Project Saya</h1>
+        <div class="sub" id="list-user-label"></div>
+      </div>
+      <button class="icon-btn" onclick="doLogout()" title="Keluar">⏻</button>
+    </div>
+    <div class="search-row">
+      <input id="search-input" placeholder="Cari nama project / alamat..." oninput="onSearchInput()">
+    </div>
+    <div class="chips" id="filter-chips"></div>
+    <div id="list-content" class="content"></div>
+    <button class="fab" onclick="openNewProject()">+</button>
+  </div>
+
+  <!-- ===================== PROJECT DETAIL ===================== -->
+  <div id="view-detail" class="hidden">
+    <div class="appbar">
+      <button class="icon-btn" onclick="showList()">←</button>
+      <div>
+        <h1 id="detail-title">Detail Project</h1>
+        <div class="sub" id="detail-id"></div>
+      </div>
+    </div>
+    <div id="detail-content"></div>
+    <button class="fab" onclick="openNewActivity()">+</button>
+  </div>
+
+  <!-- ===================== NEW PROJECT FORM ===================== -->
+  <div id="view-new-project" class="hidden">
+    <div class="appbar">
+      <button class="icon-btn" onclick="showList()">←</button>
+      <h1>Project Baru</h1>
+    </div>
+    <div class="form-wrap">
+      <div class="field"><label>Nama Project *</label><input id="np-name" placeholder="Rumah Bpk. Budi, Kemang"></div>
+      <div class="field"><label>Alamat Lokasi *</label><textarea id="np-address" placeholder="Jl. Kemang Raya No. 10, Jakarta Selatan"></textarea></div>
+      <div class="field"><label>Jenis Produk *</label><input id="np-product" placeholder="Jendela Aluminium, Curtain Wall, dll"></div>
+      <div class="field"><label>Kategori Project</label>
+        <select id="np-category"><option value="">— Pilih —</option><option>Residensial</option><option>Komersial</option><option>Industrial</option></select>
+      </div>
+      <div class="field"><label>Tahap Konstruksi</label>
+        <select id="np-stage"><option value="">— Pilih —</option><option>Perencanaan</option><option>Pembangunan</option><option>Finishing</option><option>Selesai</option></select>
+      </div>
+      <div class="field"><label>Skala Estimasi</label><input id="np-scale" placeholder="misal: 20 unit jendela"></div>
+      <div class="field"><label>Sumber Lead</label>
+        <select id="np-lead"><option>Canvassing</option><option>Referral</option><option>Website</option><option>Pameran</option></select>
+      </div>
+      <div class="field"><label>Estimasi Nilai (Rp)</label><input id="np-value" type="number" placeholder="0"></div>
+      <button class="btn btn-primary" id="btn-save-project" onclick="submitNewProject()">Simpan Project</button>
+      <p class="error-text" id="np-error"></p>
+    </div>
+  </div>
+
+  <!-- ===================== NEW ACTIVITY FORM ===================== -->
+  <div id="view-new-activity" class="hidden">
+    <div class="appbar">
+      <button class="icon-btn" onclick="closeNewActivity()">←</button>
+      <h1>Catat Kunjungan</h1>
+    </div>
+    <div class="form-wrap">
+      <div class="gps-status" id="gps-status">📍 Mengambil lokasi GPS...</div>
+
+      <div class="form-section-label">Detail Kunjungan</div>
+      <div class="field"><label>Jenis Aktivitas *</label>
+        <select id="na-type">
+          <option>Kunjungan Pertama</option><option>Follow Up</option><option>Presentasi Produk</option>
+          <option>Negosiasi</option><option>Survey Lokasi</option><option>Lainnya</option>
+        </select>
+      </div>
+      <div class="field"><label>Catatan *</label><textarea id="na-note" placeholder="Apa yang terjadi/dibahas saat kunjungan..."></textarea></div>
+
+      <div class="form-section-label">Status Pipeline</div>
+      <div class="field"><label>Pipeline Stage *</label>
+        <select id="na-stage" onchange="onStageChange()">
+          <option>New Visit</option><option>Perlu Estimasi Harga</option>
+          <option>Penawaran Siap</option><option>Won</option><option>Lost</option>
+        </select>
+      </div>
+      <div class="field hidden" id="na-lost-wrap"><label>Alasan Lost *</label><input id="na-lostreason" placeholder="misal: harga kalah bersaing"></div>
+      <div class="field"><label>Follow-up Berikutnya *</label><input id="na-followup" type="date"></div>
+
+      <div class="form-section-label">Foto Kunjungan</div>
+      <div class="photo-picker" id="photo-picker">
+        <label class="photo-add">＋<input type="file" accept="image/*" capture="environment" multiple id="na-photo-input" style="display:none" onchange="onPhotosSelected(event)"></label>
+      </div>
+
+      <button class="btn btn-primary" id="btn-save-activity" onclick="submitNewActivity()" style="margin-top:22px">Simpan Aktivitas</button>
+      <p class="error-text" id="na-error"></p>
+    </div>
+  </div>
+
+</div>
+
+<!-- CONTACT MODAL -->
+<div id="modal-contact" class="modal-overlay hidden" onclick="if(event.target===this) closeContactModal()">
+  <div class="modal-sheet">
+    <h3>Tambah Kontak</h3>
+    <div class="field"><label>Nama *</label><input id="ct-name"></div>
+    <div class="field"><label>No. Telepon *</label><input id="ct-phone" type="tel"></div>
+    <div class="field"><label>Peran *</label><input id="ct-role" placeholder="Pemilik, Arsitek, Kontraktor, dll"></div>
+    <div class="field"><label>Afiliasi Perusahaan</label><input id="ct-company"></div>
+    <button class="btn btn-primary" onclick="submitContact()">Simpan Kontak</button>
+    <p class="error-text" id="ct-error"></p>
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<script>
+/* ============================================================
+   KONFIGURASI
+   ============================================================ */
+const WORKER_BASE_URL = 'https://svs-api.aluve.workers.dev';
+const FIREBASE_API_KEY = 'AIzaSyByAh6qbd0YS4QcMI3WwBpPjbDU1jDAlWQ';
+const PIPELINE_STAGES = ['New Visit', 'Perlu Estimasi Harga', 'Penawaran Siap', 'Won', 'Lost'];
+const HEALTH_FILTERS = [
+  { key: 'all', label: 'Semua' },
+  { key: 'Aktif', label: 'Aktif' },
+  { key: 'Perlu Perhatian', label: 'Perlu Perhatian' },
+  { key: 'Stale', label: 'Stale' }
+];
+
+let state = {
+  idToken: null,
+  user: null,
+  activeFilter: 'all',
+  projects: [],
+  currentProjectId: null,
+  currentProject: null,
+  pendingPhotos: []
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function $(id) { return document.getElementById(id); }
+function show(id) { $(id).classList.remove('hidden'); }
+function hide(id) { $(id).classList.add('hidden'); }
+
+function toast(message, isError) {
+  const t = $('toast');
+  t.textContent = message;
+  t.className = isError ? 'err' : '';
+  setTimeout(() => t.classList.add('hidden'), 3000);
+}
+
+function relativeDate(dateStr) {
+  const d = new Date(dateStr);
+  const diffMs = Date.now() - d.getTime();
+  const days = Math.floor(diffMs / 86400000);
+  if (days <= 0) return 'Hari ini';
+  if (days === 1) return 'Kemarin';
+  if (days < 30) return days + ' hari lalu';
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatDateTime(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) + ', ' +
+    d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function callWorker(path, body) {
+  const res = await fetch(WORKER_BASE_URL + '/' + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.idToken },
+    body: JSON.stringify(body || {})
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message || 'Terjadi kesalahan');
+  return json.data;
+}
+
+/* ============================================================
+   LOGIN / LOGOUT
+   ============================================================ */
+async function doLogin() {
+  const email = $('login-email').value.trim();
+  const password = $('login-password').value;
+  $('login-error').textContent = '';
+
+  if (!email || !password) { $('login-error').textContent = 'Isi email dan password.'; return; }
+
+  $('btn-login').disabled = true;
+  $('btn-login').innerHTML = '<span class="spinner"></span> Masuk...';
+
+  try {
+    const res = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, returnSecureToken: true })
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ? json.error.message : 'Login gagal');
+
+    state.idToken = json.idToken;
+    await loadUserProfileAndList(json.email);
+  } catch (err) {
+    $('login-error').textContent = err.message.includes('INVALID') || err.message.includes('PASSWORD')
+      ? 'Email atau password salah.'
+      : err.message;
+  } finally {
+    $('btn-login').disabled = false;
+    $('btn-login').textContent = 'Masuk';
+  }
+}
+
+async function loadUserProfileAndList(email) {
+  const profile = await callWorker('readMyProfile', {});
+  state.user = profile; // berisi { uid, name, role, business_id, sales_code, status, email }
+  $('list-user-label').textContent = (profile.name || email) + (profile.role !== 'sales' ? ' · ' + profile.role : '');
+  hide('view-login'); show('view-list');
+  renderFilterChips();
+  await refreshProjectList();
+}
+
+function doLogout() {
+  state.idToken = null; state.user = null; state.projects = [];
+  $('login-email').value = ''; $('login-password').value = '';
+  hide('view-list'); hide('view-detail'); show('view-login');
+}
+
+/* ============================================================
+   PROJECT LIST
+   ============================================================ */
+function renderFilterChips() {
+  const wrap = $('filter-chips');
+  wrap.innerHTML = '';
+  HEALTH_FILTERS.forEach((f) => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (state.activeFilter === f.key ? ' active' : '');
+    chip.textContent = f.label;
+    chip.onclick = () => { state.activeFilter = f.key; renderFilterChips(); renderProjectList(); };
+    wrap.appendChild(chip);
+  });
+}
+
+let searchDebounce = null;
+function onSearchInput() {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => {
+    const kw = $('search-input').value.trim();
+    if (kw.length === 0) { refreshProjectList(); }
+    else { searchProjects(kw); }
+  }, 400);
+}
+
+async function refreshProjectList() {
+  $('list-content').innerHTML = '<div class="center-loading"><span class="spinner" style="border-color:rgba(22,41,77,0.2);border-top-color:var(--navy)"></span></div>';
+  try {
+    // Sales hanya lihat project miliknya sendiri; manager/super_admin lihat semua project di bisnisnya.
+    const filterBody = state.user && state.user.role === 'sales' ? { sales_uid: state.user.uid } : {};
+    const data = await callWorker('filterProject', filterBody);
+    state.projects = data;
+    renderProjectList();
+  } catch (err) {
+    toast(err.message, true);
+    $('list-content').innerHTML = '<div class="empty-state"><div class="emoji">⚠️</div><p>Gagal memuat daftar project.</p></div>';
+  }
+}
+
+async function searchProjects(keyword) {
+  $('list-content').innerHTML = '<div class="center-loading"><span class="spinner" style="border-color:rgba(22,41,77,0.2);border-top-color:var(--navy)"></span></div>';
+  try {
+    const body = { keyword };
+    if (state.user && state.user.role === 'sales') body.sales_uid = state.user.uid;
+    const data = await callWorker('searchProject', body);
+    state.projects = data;
+    renderProjectList();
+  } catch (err) { toast(err.message, true); }
+}
+
+function renderProjectList() {
+  const list = state.activeFilter === 'all'
+    ? state.projects
+    : state.projects.filter((p) => p.health_status === state.activeFilter);
+
+  const wrap = $('list-content');
+  if (list.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><div class="emoji">📭</div><p>Belum ada project di kategori ini.<br>Ketuk tombol + untuk buat project baru.</p></div>';
+    return;
+  }
+
+  wrap.innerHTML = list.map((p) => {
+    const statusClass = 'status-' + (p.health_status || 'Aktif').replace(/\s/g, '-');
+    const healthClass = (p.health_status || 'Aktif').replace(/\s/g, '-');
+    return `
+      <div class="card ${statusClass}" onclick="openDetail('${p.project_id}')">
+        <div class="card-top">
+          <h3>${escapeHtml(p.project_name)}</h3>
+          <span class="badge stage">${escapeHtml(p.pipeline_stage || '')}</span>
+        </div>
+        <div class="addr">${escapeHtml(p.location_address || '')}</div>
+        <div class="card-meta">
+          <span class="health ${healthClass}">● ${p.health_status || 'Aktif'}</span>
+          <span class="date">${relativeDate(p.date_last_activity)}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function showList() {
+  hide('view-detail'); hide('view-new-project'); show('view-list');
+  refreshProjectList();
+}
+
+/* ============================================================
+   PROJECT DETAIL
+   ============================================================ */
+async function openDetail(projectId) {
+  state.currentProjectId = projectId;
+  hide('view-list'); show('view-detail');
+  $('detail-title').textContent = 'Memuat...';
+  $('detail-content').innerHTML = '<div class="center-loading"><span class="spinner" style="border-color:rgba(22,41,77,0.2);border-top-color:var(--navy)"></span></div>';
+
+  try {
+    const [project, timeline, contacts] = await Promise.all([
+      callWorker('readProject', { project_id: projectId }),
+      callWorker('readActivityTimeline', { project_id: projectId }),
+      callWorker('readProjectContacts', { project_id: projectId })
+    ]);
+    state.currentProject = project;
+    renderDetail(project, timeline, contacts);
+  } catch (err) {
+    toast(err.message, true);
+    $('detail-content').innerHTML = '<div class="empty-state"><div class="emoji">⚠️</div><p>Gagal memuat detail project.</p></div>';
+  }
+}
+
+function renderDetail(p, timeline, contacts) {
+  $('detail-title').textContent = p.project_name;
+  $('detail-id').textContent = p.project_id;
+
+  let html = `
+    <div class="info-card">
+      <h2>${escapeHtml(p.project_name)}</h2>
+      <div class="addr">📍 ${escapeHtml(p.location_address)}</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="label">Jenis Produk</div><div class="value">${escapeHtml(p.product_type || '-')}</div></div>
+        <div class="info-item"><div class="label">Kategori</div><div class="value">${escapeHtml(p.project_category || '-')}</div></div>
+        <div class="info-item"><div class="label">Tahap Konstruksi</div><div class="value">${escapeHtml(p.construction_stage || '-')}</div></div>
+        <div class="info-item"><div class="label">Sumber Lead</div><div class="value">${escapeHtml(p.lead_source || '-')}</div></div>
+      </div>
+      <span class="stage-pill">${escapeHtml(p.pipeline_stage)}</span>
+    </div>
+
+    <div class="section-title"><h3>Kontak (${contacts.length})</h3><button class="link-btn" onclick="openContactModal()">+ Tambah</button></div>
+    ${contacts.length === 0 ? '<div style="padding:0 16px 8px;color:var(--muted);font-size:12.5px">Belum ada kontak.</div>' :
+      contacts.map((c) => `
+        <div class="contact-row">
+          <div><div class="name">${escapeHtml(c.contact_name)}</div><div class="role">${escapeHtml(c.role)}</div></div>
+          <a href="tel:${escapeHtml(c.phone_number)}">📞 ${escapeHtml(c.phone_number)}</a>
+        </div>`).join('')}
+
+    <div class="section-title" style="margin-top:8px"><h3>Riwayat Aktivitas (${timeline.length})</h3></div>
+    <div class="timeline">
+      ${timeline.length === 0 ? '<div class="empty-state"><div class="emoji">🕘</div><p>Belum ada aktivitas tercatat.<br>Ketuk tombol + untuk catat kunjungan.</p></div>' :
+        timeline.map((a) => `
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-card">
+              <div class="tl-top"><span class="tl-type">${escapeHtml(a.activity_type)}</span><span class="tl-date">${formatDateTime(a.timestamp)}</span></div>
+              <div class="tl-note">${escapeHtml(a.activity_note)}</div>
+              <span class="tl-stage">${escapeHtml(a.pipeline_stage_at_this_point)}</span>
+              ${a.photos && a.photos.length > 0 ? `<div class="tl-photos">${a.photos.map((ph) => `<img src="${ph.url}">`).join('')}</div>` : ''}
+            </div>
+          </div>`).join('')}
+    </div>
+  `;
+  $('detail-content').innerHTML = html;
+}
+
+/* ============================================================
+   NEW PROJECT
+   ============================================================ */
+function openNewProject() {
+  ['np-name','np-address','np-product','np-category','np-stage','np-scale','np-lead','np-value'].forEach((id) => {
+    if ($(id).tagName === 'SELECT') $(id).selectedIndex = 0; else $(id).value = '';
+  });
+  $('np-error').textContent = '';
+  hide('view-list'); show('view-new-project');
+}
+
+async function submitNewProject() {
+  const name = $('np-name').value.trim();
+  const address = $('np-address').value.trim();
+  const product = $('np-product').value.trim();
+  $('np-error').textContent = '';
+
+  if (!name || !address || !product) {
+    $('np-error').textContent = 'Nama Project, Alamat, dan Jenis Produk wajib diisi.';
+    return;
+  }
+
+  $('btn-save-project').disabled = true;
+  $('btn-save-project').innerHTML = '<span class="spinner"></span> Menyimpan...';
+
+  try {
+    const data = await callWorker('createProject', {
+      project_name: name,
+      location_address: address,
+      product_type: product,
+      project_category: $('np-category').value,
+      construction_stage: $('np-stage').value,
+      estimated_scale: $('np-scale').value,
+      lead_source: $('np-lead').value,
+      estimated_value: $('np-value').value
+    });
+    toast('Project berhasil dibuat');
+    hide('view-new-project');
+    openDetail(data.project_id);
+  } catch (err) {
+    $('np-error').textContent = err.message;
+  } finally {
+    $('btn-save-project').disabled = false;
+    $('btn-save-project').textContent = 'Simpan Project';
+  }
+}
+
+/* ============================================================
+   NEW ACTIVITY (+ foto & GPS)
+   ============================================================ */
+let gpsCoords = null;
+
+function openNewActivity() {
+  if (!state.currentProjectId) return;
+  $('na-note').value = ''; $('na-lostreason').value = '';
+  $('na-type').selectedIndex = 0; $('na-stage').selectedIndex = 0;
+  $('na-followup').value = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  $('na-error').textContent = '';
+  hide('na-lost-wrap');
+  state.pendingPhotos = [];
+  renderPhotoPicker();
+  gpsCoords = null;
+  $('gps-status').className = 'gps-status';
+  $('gps-status').textContent = '📍 Mengambil lokasi GPS...';
+
+  hide('view-detail'); show('view-new-activity');
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        $('gps-status').className = 'gps-status ok';
+        $('gps-status').textContent = '📍 Lokasi berhasil ditangkap';
+      },
+      () => {
+        $('gps-status').textContent = '📍 Lokasi tidak tersedia (izin ditolak) — tetap bisa lanjut';
+      },
+      { timeout: 8000 }
+    );
+  } else {
+    $('gps-status').textContent = '📍 GPS tidak didukung perangkat ini';
+  }
+}
+
+function closeNewActivity() { hide('view-new-activity'); show('view-detail'); }
+
+function onStageChange() {
+  if ($('na-stage').value === 'Lost') show('na-lost-wrap'); else hide('na-lost-wrap');
+}
+
+function onPhotosSelected(event) {
+  const files = Array.from(event.target.files);
+  files.forEach((file) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.pendingPhotos.push({ file, dataUrl: reader.result, status: 'pending', mimeType: file.type });
+      renderPhotoPicker();
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function renderPhotoPicker() {
+  const wrap = $('photo-picker');
+  const addBtn = wrap.querySelector('.photo-add');
+  wrap.querySelectorAll('.photo-thumb').forEach((el) => el.remove());
+  state.pendingPhotos.forEach((p) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    const statusLabel = p.status === 'uploading' ? 'Mengunggah...' : p.status === 'error' ? 'Gagal' : '';
+    div.innerHTML = `<img src="${p.dataUrl}">` + (statusLabel ? `<div class="status">${statusLabel}</div>` : '');
+    wrap.insertBefore(div, addBtn);
+  });
+}
+
+async function submitNewActivity() {
+  const note = $('na-note').value.trim();
+  const stage = $('na-stage').value;
+  const followup = $('na-followup').value;
+  const lostReason = $('na-lostreason').value.trim();
+  $('na-error').textContent = '';
+
+  if (!note) { $('na-error').textContent = 'Catatan aktivitas wajib diisi.'; return; }
+  if (!followup) { $('na-error').textContent = 'Tanggal follow-up wajib diisi.'; return; }
+  if (stage === 'Lost' && !lostReason) { $('na-error').textContent = 'Alasan Lost wajib diisi.'; return; }
+
+  $('btn-save-activity').disabled = true;
+  $('btn-save-activity').innerHTML = '<span class="spinner"></span> Menyimpan...';
+
+  try {
+    const photoIds = [];
+    for (const p of state.pendingPhotos) {
+      if (p.status === 'done') { photoIds.push(p.photoId); continue; }
+      p.status = 'uploading'; renderPhotoPicker();
+      try {
+        const base64 = p.dataUrl.split(',')[1];
+        const uploadData = await callWorker('uploadPhoto', {
+          project_id: state.currentProjectId,
+          file_base64: base64,
+          mime_type: p.mimeType
+        });
+        p.status = 'done'; p.photoId = uploadData.photo_id;
+        photoIds.push(uploadData.photo_id);
+      } catch (err) {
+        p.status = 'error';
+        throw new Error('Gagal upload foto: ' + err.message);
+      }
+    }
+    renderPhotoPicker();
+
+    await callWorker('createActivity', {
+      project_id: state.currentProjectId,
+      activity_type: $('na-type').value,
+      activity_note: note,
+      pipeline_stage: stage,
+      next_followup_date: followup,
+      lost_reason: stage === 'Lost' ? lostReason : '',
+      gps_lat: gpsCoords ? gpsCoords.lat : '',
+      gps_lng: gpsCoords ? gpsCoords.lng : '',
+      photo_ids: photoIds
+    });
+
+    toast('Aktivitas berhasil disimpan');
+    closeNewActivity();
+    openDetail(state.currentProjectId);
+  } catch (err) {
+    $('na-error').textContent = err.message;
+  } finally {
+    $('btn-save-activity').disabled = false;
+    $('btn-save-activity').textContent = 'Simpan Aktivitas';
+  }
+}
+
+/* ============================================================
+   CONTACT MODAL
+   ============================================================ */
+function openContactModal() {
+  $('ct-name').value = ''; $('ct-phone').value = ''; $('ct-role').value = ''; $('ct-company').value = '';
+  $('ct-error').textContent = '';
+  show('modal-contact');
+}
+function closeContactModal() { hide('modal-contact'); }
+
+async function submitContact() {
+  const name = $('ct-name').value.trim();
+  const phone = $('ct-phone').value.trim();
+  const role = $('ct-role').value.trim();
+  $('ct-error').textContent = '';
+
+  if (!name || !phone || !role) { $('ct-error').textContent = 'Nama, No. Telepon, dan Peran wajib diisi.'; return; }
+
+  try {
+    await callWorker('createContact', {
+      project_id: state.currentProjectId,
+      contact_name: name,
+      phone_number: phone,
+      role: role,
+      company_affiliation: $('ct-company').value.trim()
+    });
+    toast('Kontak berhasil ditambahkan');
+    closeContactModal();
+    openDetail(state.currentProjectId);
+  } catch (err) {
+    $('ct-error').textContent = err.message;
+  }
+}
+</script>
+</body>
+</html>
