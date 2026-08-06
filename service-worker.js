@@ -13,7 +13,7 @@
  * data basi. Yang di-cache cuma "cangkang" aplikasinya.
  * ============================================================ */
 
-const CACHE_NAME = 'svs-shell-v2';
+const CACHE_NAME = 'svs-shell-v3';
 const APP_SHELL_FILES = [
   './',
   './index.html',
@@ -22,7 +22,9 @@ const APP_SHELL_FILES = [
   './manifest.json',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
-  './assets/icons/apple-touch-icon.png'
+  './assets/icons/apple-touch-icon.png',
+  './assets/icons/logo.png',
+  './assets/icons/logo-wordmark.png'
 ];
 
 self.addEventListener('install', (event) => {
