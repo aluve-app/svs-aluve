@@ -1248,8 +1248,10 @@ async function doLogin() {
 
   if (!email || !password) { errorEl.textContent = 'Isi email dan password.'; return; }
 
+  handleRememberMe(email);
+
   btn.disabled = true;
-  btn.innerHTML = '<span class="snackbar-spinner"></span> Masuk...';
+  btn.innerHTML = '<span class="snackbar-spinner"></span> Logging in...';
 
   try {
     const res = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + FIREBASE_API_KEY, {
@@ -1272,12 +1274,50 @@ async function doLogin() {
     errorEl.textContent = (err.message.includes('INVALID') || err.message.includes('PASSWORD')) ? 'Email atau password salah.' : err.message;
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Masuk';
+    btn.textContent = 'Log in';
   }
 }
 
 document.getElementById('btn-login').addEventListener('click', doLogin);
 document.getElementById('login-password').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+/* ============================================================
+   SPLASH SCREEN & LOGIN UX — Aug 2026
+   ============================================================ */
+function handleRememberMe(email) {
+  const rememberBox = document.getElementById('login-remember');
+  if (rememberBox && rememberBox.checked) {
+    localStorage.setItem('svs_remembered_email', email);
+  } else {
+    localStorage.removeItem('svs_remembered_email');
+  }
+}
+
+(function initSplashAndLoginUX() {
+  const splash = document.getElementById('view-splash');
+  const loginView = document.getElementById('view-login');
+
+  setTimeout(() => {
+    if (splash) splash.hidden = true;
+    if (loginView) loginView.hidden = false;
+
+    const rememberedEmail = localStorage.getItem('svs_remembered_email');
+    const emailInput = document.getElementById('login-email');
+    const rememberBox = document.getElementById('login-remember');
+    if (rememberedEmail && emailInput && rememberBox) {
+      emailInput.value = rememberedEmail;
+      rememberBox.checked = true;
+    }
+  }, 1300);
+
+  const toggleBtn = document.getElementById('btn-toggle-password');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const pwInput = document.getElementById('login-password');
+      pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+    });
+  }
+})();
 
 /* ============================================================
    INIT (dipanggil SETELAH login berhasil)
