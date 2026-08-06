@@ -1,12 +1,12 @@
 /* ============================================================
-   DESIGN TOKENS - diambil dari app SVS versi sebelumnya (style.css)
-   supaya identitas visual (biru-oranye Aluve) tetap konsisten
+   DESIGN TOKENS - rebrand Aug 2026 (hitam-putih ALUVE)
+   Warna status (success/warning/danger) & aksen oranye TIDAK diubah
    ============================================================ */
 :root {
   --app-max-width: 480px;
-  --color-primary: #1E3A8A;
-  --color-primary-hover: #162C69;
-  --color-primary-soft: #E8ECF9;
+  --color-primary: #1A1A1A;
+  --color-primary-hover: #000000;
+  --color-primary-soft: #E9E9EA;
   --color-secondary: #F59E0B;
   --color-secondary-soft: #FEF3E0;
   --color-on-primary: #FFFFFF;
@@ -48,7 +48,8 @@
     --color-bg: #101114; --color-surface: #1A1B1F; --color-surface-alt: #232429;
     --color-surface-raised: #202127; --color-border: #2E3036;
     --color-text-primary: #F3F4F6; --color-text-secondary: #9CA3AF; --color-text-tertiary: #6B7280;
-    --color-primary-soft: rgba(74, 111, 209, 0.18); --color-secondary-soft: rgba(245, 158, 11, 0.16);
+    --color-primary: #2A2A2A;
+    --color-primary-soft: rgba(255, 255, 255, 0.08); --color-secondary-soft: rgba(245, 158, 11, 0.16);
     --color-success-soft: rgba(22, 163, 74, 0.16); --color-warning-soft: rgba(217, 119, 6, 0.16);
     --color-danger-soft: rgba(220, 38, 38, 0.18);
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4); --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -59,7 +60,8 @@ html[data-theme="dark"] {
   --color-bg: #101114; --color-surface: #1A1B1F; --color-surface-alt: #232429;
   --color-surface-raised: #202127; --color-border: #2E3036;
   --color-text-primary: #F3F4F6; --color-text-secondary: #9CA3AF; --color-text-tertiary: #6B7280;
-  --color-primary-soft: rgba(74, 111, 209, 0.18); --color-secondary-soft: rgba(245, 158, 11, 0.16);
+  --color-primary: #2A2A2A;
+  --color-primary-soft: rgba(255, 255, 255, 0.08); --color-secondary-soft: rgba(245, 158, 11, 0.16);
   --color-success-soft: rgba(22, 163, 74, 0.16); --color-warning-soft: rgba(217, 119, 6, 0.16);
   --color-danger-soft: rgba(220, 38, 38, 0.18);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4); --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -69,7 +71,8 @@ html[data-theme="light"] {
   --color-bg: #F7F8FA; --color-surface: #FFFFFF; --color-surface-alt: #F1F2F5;
   --color-surface-raised: #FFFFFF; --color-border: #E5E7EB;
   --color-text-primary: #111827; --color-text-secondary: #6B7280; --color-text-tertiary: #9CA3AF;
-  --color-primary-soft: #E8ECF9; --color-secondary-soft: #FEF3E0;
+  --color-primary: #1A1A1A;
+  --color-primary-soft: #E9E9EA; --color-secondary-soft: #FEF3E0;
   --color-success-soft: #E7F7EC; --color-warning-soft: #FEF3E0; --color-danger-soft: #FDECEC;
   --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 1px rgba(16, 24, 40, 0.04);
   --shadow-elevated: 0 8px 24px rgba(16, 24, 40, 0.16); --shadow-sheet: 0 -8px 30px rgba(16, 24, 40, 0.18);
@@ -88,18 +91,69 @@ h1, h2, h3, p { margin: 0; }
 
 #app { max-width: var(--app-max-width); margin: 0 auto; min-height: 100%; position: relative; padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)); background: var(--color-bg); }
 
-#view-login { max-width: var(--app-max-width); margin: 0 auto; display: flex; flex-direction: column; justify-content: center; min-height: 100vh; padding: 32px 24px; }
-.login-brand { text-align: center; margin-bottom: 40px; }
-.login-brand .mark { width: 56px; height: 56px; border-radius: var(--radius-md); background: var(--color-primary); margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; color: var(--color-secondary); font-weight: 700; font-size: 22px; }
-.login-brand h1 { font-size: 22px; color: var(--color-primary); }
-.login-brand p { color: var(--color-text-secondary); font-size: 13px; margin-top: 4px; }
-.field { margin-bottom: 14px; }
-.field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; }
-.field input, .field select { width: 100%; padding: 13px 14px; border: 1.5px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text-primary); font-size: 15px; }
-.field input:focus, .field select:focus { outline: none; border-color: var(--color-primary); }
-.error-text { color: var(--color-danger); font-size: 12.5px; margin-top: 8px; min-height: 16px; }
-.login-btn { width: 100%; padding: 14px; border-radius: var(--radius-sm); background: var(--color-secondary); color: #1A1300; font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
+/* ============================================================
+   SPLASH & LOGIN — redesign Aug 2026
+   ============================================================ */
+#view-splash {
+  min-height: 100vh; min-height: 100dvh;
+  background: var(--color-primary);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px 24px; position: relative;
+}
+.splash-content { display: flex; flex-direction: column; align-items: center; }
+.splash-logo { width: 190px; height: auto; }
+.splash-subtitle { color: #fff; font-style: italic; font-weight: 700; font-size: 19px; margin: -4px 0 0; }
+.splash-tagline { color: rgba(255,255,255,0.7); font-style: italic; font-size: 13px; margin: 10px 0 0; text-align: center; }
+.splash-footer { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.4); font-size: 11px; }
+
+#view-login {
+  min-height: 100vh; min-height: 100dvh;
+  background: var(--color-primary);
+  display: flex; flex-direction: column;
+  max-width: var(--app-max-width); margin: 0 auto;
+}
+.login-hero { padding: 48px 24px 56px; text-align: center; }
+.login-logo { width: 150px; height: auto; }
+.login-hero-subtitle { color: #fff; font-style: italic; font-weight: 700; font-size: 16px; margin: -4px 0 0; }
+.login-hero-tagline { color: rgba(255,255,255,0.65); font-style: italic; font-size: 12px; margin: 8px 0 0; }
+
+.login-card {
+  background: var(--color-surface);
+  border-radius: 28px 28px 0 0;
+  margin-top: -24px;
+  padding: 32px 24px 20px;
+  flex: 1;
+  box-shadow: var(--shadow-sheet);
+}
+.login-title { font-size: 25px; font-weight: 800; color: var(--color-text-primary); }
+.login-subtitle { color: var(--color-text-tertiary); font-size: 14px; margin: 4px 0 24px; }
+
+.field-icon { position: relative; margin-bottom: 16px; }
+.field-icon .field-icon-svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--color-text-tertiary); width: 18px; height: 18px; }
+.field-icon .field-icon-svg .icon { width: 18px; height: 18px; }
+.field-icon input {
+  width: 100%; padding: 14px 44px; border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text-primary); font-size: 14.5px;
+}
+.field-icon input::placeholder { color: var(--color-text-tertiary); }
+.field-icon input:focus { outline: none; border-color: var(--color-primary); }
+.field-icon-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); }
+.field-icon-toggle .icon { width: 18px; height: 18px; }
+
+.login-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-secondary); }
+.checkbox-label input { width: 16px; height: 16px; accent-color: var(--color-primary); }
+.login-forgot { font-size: 13px; color: var(--color-text-secondary); text-decoration: none; }
+
+.login-btn {
+  width: 100%; padding: 15px; border-radius: var(--radius-sm);
+  background: var(--color-primary); color: #fff; font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
 .login-btn:disabled { opacity: 0.6; }
+.login-btn:active { background: var(--color-primary-hover); }
+.login-footer { text-align: center; color: var(--color-text-tertiary); font-size: 11px; padding: 16px 0 24px; }
+.error-text { color: var(--color-danger); font-size: 12.5px; margin-top: 10px; min-height: 16px; text-align: center; }
 
 .app-header { height: var(--header-height); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-sm); background: var(--color-primary); color: var(--color-on-primary); position: sticky; top: 0; z-index: 20; }
 .header-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; flex: 1; padding: 0 var(--space-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
