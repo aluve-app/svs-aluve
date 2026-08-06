@@ -93,10 +93,12 @@ h1, h2, h3, p { margin: 0; }
 
 /* ============================================================
    SPLASH & LOGIN — redesign Aug 2026
+   Warna DIKUNCI TETAP (#141414 / #FFFFFF) — TIDAK ikut dark/light
+   mode HP, karena ini brand identity, bukan bagian yang bertema.
    ============================================================ */
 #view-splash {
   min-height: 100vh; min-height: 100dvh;
-  background: var(--color-primary);
+  background: #141414;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 32px 24px; position: relative;
 }
@@ -108,7 +110,7 @@ h1, h2, h3, p { margin: 0; }
 
 #view-login {
   min-height: 100vh; min-height: 100dvh;
-  background: var(--color-primary);
+  background: #141414;
   display: flex; flex-direction: column;
   max-width: var(--app-max-width); margin: 0 auto;
 }
@@ -118,44 +120,44 @@ h1, h2, h3, p { margin: 0; }
 .login-hero-tagline { color: rgba(255,255,255,0.65); font-style: italic; font-size: 12px; margin: 8px 0 0; }
 
 .login-card {
-  background: var(--color-surface);
+  background: #FFFFFF;
   border-radius: 28px 28px 0 0;
   margin-top: -24px;
   padding: 32px 24px 20px;
   flex: 1;
-  box-shadow: var(--shadow-sheet);
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.35);
 }
-.login-title { font-size: 25px; font-weight: 800; color: var(--color-text-primary); }
-.login-subtitle { color: var(--color-text-tertiary); font-size: 14px; margin: 4px 0 24px; }
+.login-title { font-size: 25px; font-weight: 800; color: #111827; }
+.login-subtitle { color: #9CA3AF; font-size: 14px; margin: 4px 0 24px; }
 
 .field-icon { position: relative; margin-bottom: 16px; }
-.field-icon .field-icon-svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--color-text-tertiary); width: 18px; height: 18px; }
+.field-icon .field-icon-svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9CA3AF; width: 18px; height: 18px; }
 .field-icon .field-icon-svg .icon { width: 18px; height: 18px; }
 .field-icon input {
-  width: 100%; padding: 14px 44px; border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text-primary); font-size: 14.5px;
+  width: 100%; padding: 14px 44px; border: 1.5px solid #E5E7EB;
+  border-radius: var(--radius-sm); background: #FFFFFF; color: #111827; font-size: 14.5px;
 }
-.field-icon input::placeholder { color: var(--color-text-tertiary); }
-.field-icon input:focus { outline: none; border-color: var(--color-primary); }
-.field-icon-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--color-text-tertiary); }
+.field-icon input::placeholder { color: #9CA3AF; }
+.field-icon input:focus { outline: none; border-color: #141414; }
+.field-icon-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #9CA3AF; }
 .field-icon-toggle .icon { width: 18px; height: 18px; }
 
 .login-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-.checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--color-text-secondary); }
-.checkbox-label input { width: 16px; height: 16px; accent-color: var(--color-primary); }
-.login-forgot { font-size: 13px; color: var(--color-text-secondary); text-decoration: none; }
+.checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6B7280; }
+.checkbox-label input { width: 16px; height: 16px; accent-color: #141414; }
+.login-forgot { font-size: 13px; color: #6B7280; text-decoration: none; }
 
 .login-btn {
   width: 100%; padding: 15px; border-radius: var(--radius-sm);
-  background: var(--color-primary); color: #fff; font-size: 15px; font-weight: 700;
+  background: #141414; color: #fff; font-size: 15px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .login-btn:disabled { opacity: 0.6; }
-.login-btn:active { background: var(--color-primary-hover); }
-.login-footer { text-align: center; color: var(--color-text-tertiary); font-size: 11px; padding: 16px 0 24px; }
-.error-text { color: var(--color-danger); font-size: 12.5px; margin-top: 10px; min-height: 16px; text-align: center; }
+.login-btn:active { background: #000000; }
+.login-footer { text-align: center; color: #9CA3AF; font-size: 11px; padding: 16px 0 24px; }
+.error-text { color: #DC2626; font-size: 12.5px; margin-top: 10px; min-height: 16px; text-align: center; }
 
-.app-header { height: var(--header-height); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-sm); background: var(--color-primary); color: var(--color-on-primary); position: sticky; top: 0; z-index: 20; }
+.app-header { height: var(--header-height); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-sm); background: #141414; color: var(--color-on-primary); position: sticky; top: 0; z-index: 20; }
 .header-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; flex: 1; padding: 0 var(--space-sm); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .header-actions { display: flex; align-items: center; gap: 2px; }
 .icon-btn { width: 40px; height: 40px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: inherit; position: relative; }
@@ -199,8 +201,8 @@ h1, h2, h3, p { margin: 0; }
 .card-status-suffix { font-weight: 500; color: var(--color-text-tertiary); font-size: 12.5px; }
 
 .followup-card { border-left: 3px solid var(--color-success); cursor: pointer; }
-.followup-card.overdue { border-left-color: var(--color-danger); box-shadow: 0 0 14px -4px rgba(220,38,38,0.5); }
-.followup-card.today { border-left-color: var(--color-warning); box-shadow: 0 0 14px -4px rgba(217,119,6,0.5); }
+.followup-card.overdue { border-left-color: var(--color-danger); }
+.followup-card.today { border-left-color: var(--color-warning); }
 .followup-card-action { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 4px; }
 
 .glow-success { border-color: var(--color-success); }
