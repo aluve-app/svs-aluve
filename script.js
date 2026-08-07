@@ -12,6 +12,7 @@ const State = {
   user: null, // { uid, name, role, business_id, sales_code, status, email }
 
   currentView: 'dashboard',
+  profileReturnView: 'dashboard',
   currentProjectId: null,
   currentProjectName: '',
   currentProjectStage: 'New Visit',
@@ -1010,13 +1011,20 @@ const UpdateProgressSheet = {
     document.getElementById('form-update-progress').reset();
     document.getElementById('update-progress-project-name').textContent = projectName;
     this.renderPhotoThumbnails();
-    document.getElementById('lost-reason-group').hidden = true;
-    document.getElementById('followup-date-group').hidden = false;
     document.querySelectorAll('#lost-reason-chips .chip').forEach((c) => c.classList.remove('selected'));
     document.querySelectorAll('#followup-quick-chips .chip').forEach((c) => c.classList.remove('selected'));
     document.getElementById('select-temperature').value = '';
 
     if (currentStage) document.getElementById('select-pipeline-stage').value = currentStage;
+
+    // FIX (Ags 2026): tentukan visibilitas grup Lost/Follow-up berdasarkan
+    // status project SAAT SHEET DIBUKA, bukan cuma menunggu user ganti dropdown.
+    // Sebelumnya kalau sheet dibuka dan stage yang ke-set sudah Won/Lost,
+    // kolom follow-up tetap kelihatan wajib diisi walau seharusnya tidak.
+    const openedStage = document.getElementById('select-pipeline-stage').value;
+    const isClosingOnOpen = openedStage === 'Won' || openedStage === 'Lost';
+    document.getElementById('lost-reason-group').hidden = openedStage !== 'Lost';
+    document.getElementById('followup-date-group').hidden = isClosingOnOpen;
 
     const hasContact = !!(State.contactsSummary && State.contactsSummary[projectId]);
     document.getElementById('update-progress-contact-group').hidden = hasContact;
@@ -1190,6 +1198,111 @@ const FilterSheet = {
 };
 
 /* ============================================================
+   SHEET: NOTIFIKASI (baru, Ags 2026)
+   Klik lonceng di header -> tampilkan sheet berisi semua project
+   yang perlu follow up, bisa diakses dari view mana saja.
+   ============================================================ */
+const NotificationSheet = {
+  init() {
+    document.getElementById('btn-notification').addEventListener('click', () => this.open());
+  },
+  open() {
+    const cached = DashboardCache.get();
+    const items = (cached && cached.data && cached.data.needs_followup) || [];
+    const container = document.getElementById('notification-list');
+
+    if (items.length === 0) {
+      container.innerHTML = '<p class="empty-state">Tidak ada follow up yang jatuh tempo.</p>';
+    } else {
+      container.innerHTML = items.map((item) => {
+        const urgency = item.overdue_days > 0 ? 'overdue' : 'today';
+        const label = item.overdue_days > 0 ? 'Terlewat ' + item.overdue_days + ' hari 🔴' : 'Jatuh tempo hari ini';
+        return '<div class="card followup-card ' + urgency + '">' +
+          '<h3 class="card-title">' + Icons.folder + ' ' + item.project_name + '</h3>' +
+          '<p class="card-sub">' + label + '</p>' +
+          '<div class="followup-card-action" data-notif-open-activity="' + item.project_id + '" data-notif-project-name="' + item.project_name + '">Catat Aktivitas ' + Icons.arrowRight + '</div>' +
+          '</div>';
+      }).join('');
+
+      container.querySelectorAll('[data-notif-open-activity]').forEach((el) => {
+        el.addEventListener('click', () => {
+          SheetManager.close('sheet-notifications');
+          UpdateProgressSheet.open(el.dataset.notifOpenActivity, el.dataset.notifProjectName, null);
+        });
+      });
+    }
+
+    SheetManager.open('sheet-notifications');
+  }
+};
+
+/* ============================================================
+   VIEW: PROFIL SAYA & GANTI PASSWORD (baru, Ags 2026)
+   Ganti password pakai Firebase Identity Toolkit REST API langsung
+   dari browser — tidak perlu endpoint baru di backend Workers.
+   Alur: verifikasi password lama lewat signInWithPassword dulu
+   (supaya aman, tidak bisa ganti password tanpa tahu yang lama),
+   baru accounts:update dengan idToken hasil verifikasi itu.
+   ============================================================ */
+const ProfileView = {
+  init() {
+    document.getElementById('btn-profile').addEventListener('click', () => this.open());
+    document.getElementById('form-change-password').addEventListener('submit', (e) => { e.preventDefault(); this.submitChangePassword(); });
+  },
+
+  open() {
+    State.profileReturnView = (State.currentView === 'profile') ? 'dashboard' : State.currentView;
+    document.getElementById('profile-name').textContent = (State.user && State.user.name) || '-';
+    document.getElementById('profile-email').textContent = (State.user && State.user.email) || '-';
+    document.getElementById('form-change-password').reset();
+    const feedback = document.getElementById('change-password-feedback');
+    feedback.textContent = '';
+    Router.goTo('profile');
+  },
+
+  async submitChangePassword() {
+    const currentPassword = document.getElementById('input-current-password').value;
+    const newPassword = document.getElementById('input-new-password').value;
+    const confirmPassword = document.getElementById('input-confirm-password').value;
+    const feedback = document.getElementById('change-password-feedback');
+
+    feedback.style.color = '#DC2626';
+
+    if (!currentPassword || !newPassword || !confirmPassword) { feedback.textContent = 'Semua kolom wajib diisi.'; return; }
+    if (newPassword.length < 6) { feedback.textContent = 'Password baru minimal 6 karakter.'; return; }
+    if (newPassword !== confirmPassword) { feedback.textContent = 'Konfirmasi password baru tidak cocok.'; return; }
+
+    feedback.style.color = '#6B7280';
+    feedback.textContent = 'Memverifikasi password saat ini...';
+
+    try {
+      const verifyRes = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + FIREBASE_API_KEY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: State.user.email, password: currentPassword, returnSecureToken: true })
+      });
+      const verifyJson = await verifyRes.json();
+      if (!verifyRes.ok) throw new Error('WRONG_CURRENT');
+
+      feedback.textContent = 'Menyimpan password baru...';
+      const updateRes = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:update?key=' + FIREBASE_API_KEY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: verifyJson.idToken, password: newPassword, returnSecureToken: true })
+      });
+      const updateJson = await updateRes.json();
+      if (!updateRes.ok) throw new Error(updateJson.error ? updateJson.error.message : 'Gagal mengganti password');
+
+      State.idToken = updateJson.idToken;
+      feedback.style.color = '#16A34A';
+      feedback.textContent = 'Password berhasil diganti.';
+      document.getElementById('form-change-password').reset();
+    } catch (err) {
+      feedback.style.color = '#DC2626';
+      feedback.textContent = (err.message === 'WRONG_CURRENT') ? 'Password saat ini salah.' : 'Gagal mengganti password. Coba lagi.';
+    }
+  }
+};
+
+/* ============================================================
    SHEET MANAGER
    ============================================================ */
 const SheetManager = {
@@ -1208,7 +1321,9 @@ const SheetManager = {
 const Router = {
   init() {
     document.querySelectorAll('.bottom-nav-item').forEach((btn) => btn.addEventListener('click', () => this.goTo(btn.dataset.nav)));
-    document.getElementById('btn-back').addEventListener('click', () => this.goTo('projects'));
+    document.getElementById('btn-back').addEventListener('click', () => {
+      this.goTo(State.currentView === 'profile' ? (State.profileReturnView || 'dashboard') : 'projects');
+    });
   },
 
   goTo(viewName) {
@@ -1216,15 +1331,15 @@ const Router = {
     document.getElementById('view-' + viewName).classList.add('active');
     State.currentView = viewName;
 
-    const isTimeline = viewName === 'timeline';
-    document.getElementById('btn-back').hidden = !isTimeline;
+    const showBack = viewName === 'timeline' || viewName === 'profile';
+    document.getElementById('btn-back').hidden = !showBack;
 
     const firstName = (State.user && State.user.name) ? State.user.name.split(' ')[0] : 'Sales';
-    const titles = { dashboard: 'Halo, ' + firstName + ' 👋', projects: 'Project Saya', timeline: State.currentProjectName || 'Detail Project' };
+    const titles = { dashboard: 'Halo, ' + firstName + ' 👋', projects: 'Project Saya', timeline: State.currentProjectName || 'Detail Project', profile: 'Profil Saya' };
     document.getElementById('header-title').textContent = titles[viewName] || 'SVS';
 
     document.querySelectorAll('.bottom-nav-item').forEach((btn) => btn.classList.toggle('active', btn.dataset.nav === viewName));
-    document.getElementById('fab-add-project').hidden = isTimeline;
+    document.getElementById('fab-add-project').hidden = viewName !== 'dashboard' && viewName !== 'projects';
 
     this.refreshCurrentView();
   },
@@ -1244,6 +1359,7 @@ async function doLogin() {
   const password = document.getElementById('login-password').value;
   const errorEl = document.getElementById('login-error');
   const btn = document.getElementById('btn-login');
+  errorEl.style.color = '#DC2626';
   errorEl.textContent = '';
 
   if (!email || !password) { errorEl.textContent = 'Isi email dan password.'; return; }
@@ -1266,6 +1382,7 @@ async function doLogin() {
     const profileResult = await Api.rawCall('readMyProfile', {});
     if (!profileResult.success) throw new Error(profileResult.message || 'Gagal memuat profil');
     State.user = profileResult.data;
+    if (!State.user.email) State.user.email = email;
 
     document.getElementById('view-login').hidden = true;
     document.getElementById('app').hidden = false;
@@ -1282,18 +1399,44 @@ document.getElementById('btn-login').addEventListener('click', doLogin);
 document.getElementById('login-password').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
 
 /* ============================================================
+   LUPA PASSWORD (baru, Ags 2026)
+   Pakai fitur bawaan Firebase (kirim email reset) — tidak perlu
+   endpoint baru di backend Workers.
+   ============================================================ */
+document.getElementById('link-forgot-password').addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const errorEl = document.getElementById('login-error');
+
+  if (!email) {
+    errorEl.style.color = '#DC2626';
+    errorEl.textContent = 'Isi email dulu, lalu tap "Forgot password?" lagi.';
+    return;
+  }
+
+  errorEl.style.color = '#6B7280';
+  errorEl.textContent = 'Mengirim link reset ke ' + email + '...';
+
+  try {
+    const res = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=' + FIREBASE_API_KEY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestType: 'PASSWORD_RESET', email })
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error ? json.error.message : 'Gagal mengirim email reset');
+
+    errorEl.style.color = '#16A34A';
+    errorEl.textContent = 'Link reset password sudah dikirim ke ' + email + '. Cek inbox/folder spam.';
+  } catch (err) {
+    errorEl.style.color = '#DC2626';
+    errorEl.textContent = (err.message && err.message.includes('EMAIL_NOT_FOUND')) ? 'Email tidak terdaftar.' : 'Gagal mengirim email reset. Coba lagi.';
+  }
+});
+
+/* ============================================================
    SPLASH SCREEN & LOGIN UX — Aug 2026
    ============================================================ */
-function handleRememberMe(email) {
-  const rememberBox = document.getElementById('login-remember');
-  if (rememberBox && rememberBox.checked) {
-    localStorage.setItem('svs_remembered_email', email);
-  } else {
-    localStorage.removeItem('svs_remembered_email');
-  }
-}
-
-(function initSplashAndLoginUX() {
+document.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById('view-splash');
   const loginView = document.getElementById('view-login');
 
@@ -1317,7 +1460,17 @@ function handleRememberMe(email) {
       pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
     });
   }
-})();
+});
+
+// Simpan/hapus email "Remember me" — dipanggil dari dalam doLogin()
+function handleRememberMe(email) {
+  const rememberBox = document.getElementById('login-remember');
+  if (rememberBox && rememberBox.checked) {
+    localStorage.setItem('svs_remembered_email', email);
+  } else {
+    localStorage.removeItem('svs_remembered_email');
+  }
+}
 
 /* ============================================================
    INIT (dipanggil SETELAH login berhasil)
@@ -1335,6 +1488,8 @@ function initApp() {
   safeInit('UpdateProgressSheet', () => UpdateProgressSheet.init());
   safeInit('AddContactSheet', () => AddContactSheet.init());
   safeInit('FilterSheet', () => FilterSheet.init());
+  safeInit('NotificationSheet', () => NotificationSheet.init());
+  safeInit('ProfileView', () => ProfileView.init());
 
   document.getElementById('btn-logout').addEventListener('click', () => {
     State.idToken = null; State.user = null;
