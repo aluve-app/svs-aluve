@@ -302,6 +302,8 @@ h1, h2, h3, p { margin: 0; }
 .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--color-primary); }
 .form-textarea { resize: vertical; }
 .form-hint { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+.readonly-display { width: 100%; padding: 12px 13px; border: 1.5px dashed var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface-alt); color: var(--color-text-tertiary); font-size: 14.5px; font-style: italic; }
+.readonly-display.has-value { border-style: solid; border-color: var(--color-success); background: var(--color-success-soft); color: var(--color-text-primary); font-weight: 700; font-style: normal; }
 
 .photo-source-buttons { display: flex; gap: 8px; margin-bottom: 10px; }
 .photo-source-buttons .secondary-button { flex: 1; }

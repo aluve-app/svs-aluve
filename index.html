@@ -250,7 +250,11 @@
         </div>
         <input id="input-followup-date" class="form-input" type="date" />
       </div>
-      <div class="form-group"><label class="form-label" for="input-estimated-value">Estimasi Nilai Project (opsional)</label><input id="input-estimated-value" class="form-input" type="number" inputmode="numeric" placeholder="Contoh: 25000000" min="0" /><p class="form-hint">Isi kalau sudah tahu perkiraan nilainya. Boleh dikosongkan dan diisi/diperbarui belakangan.</p></div>
+      <div class="form-group">
+        <label class="form-label">Estimasi Nilai Project</label>
+        <div id="estimated-value-display" class="readonly-display">Menunggu hasil estimasi dari tim Estimator</div>
+        <p class="form-hint">Angka ini otomatis terisi dari Project Estimator begitu penawaran selesai dihitung — tidak bisa diisi/diubah manual dari sini.</p>
+      </div>
       <div class="form-group">
         <label class="form-label">Foto Update (opsional, boleh lebih dari 1)</label>
         <input id="input-photo" type="file" accept="image/*" capture="environment" hidden />

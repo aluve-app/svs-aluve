@@ -1062,6 +1062,20 @@ const UpdateProgressSheet = {
     const hasContact = !!(State.contactsSummary && State.contactsSummary[projectId]);
     document.getElementById('update-progress-contact-group').hidden = hasContact;
 
+    // Estimasi Nilai Project SEKARANG READ-ONLY (Ags 2026) — angka ini
+    // cuma boleh terisi otomatis dari Project Estimator (lewat
+    // notifySalesQuotationSent di backend), sales tidak lagi bisa
+    // isi/ubah manual dari Sales App sama sekali.
+    const cachedProject = (State.projectsCache || []).find((p) => p.project_id === projectId) || {};
+    const valueDisplay = document.getElementById('estimated-value-display');
+    if (cachedProject.estimated_value) {
+      valueDisplay.textContent = 'Rp ' + Number(cachedProject.estimated_value).toLocaleString('id-ID') + ' — Otomatis dari Project Estimator';
+      valueDisplay.classList.add('has-value');
+    } else {
+      valueDisplay.textContent = 'Menunggu hasil estimasi dari tim Estimator';
+      valueDisplay.classList.remove('has-value');
+    }
+
     SheetManager.open('sheet-update-progress');
   },
 
@@ -1105,16 +1119,8 @@ const UpdateProgressSheet = {
       photo_ids: photoAssignments.map((p) => p.photoId)
     };
 
-    const estimatedValue = document.getElementById('input-estimated-value').value;
-
     SheetManager.close('sheet-update-progress');
     Snackbar.showPersistent('Menyimpan...');
-
-    if (estimatedValue) {
-      Api.call('updateProject', { project_id: State.currentProjectId, estimated_value: estimatedValue }).then((result) => {
-        if (!result.success && !result.queued) Snackbar.show('Gagal menyimpan nilai project: ' + (result.message || ''), 'error');
-      });
-    }
 
     if (!document.getElementById('update-progress-contact-group').hidden) {
       const contactName = document.getElementById('input-contact-name-update').value.trim();
