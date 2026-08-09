@@ -13,7 +13,7 @@
  * data basi. Yang di-cache cuma "cangkang" aplikasinya.
  * ============================================================ */
 
-const CACHE_NAME = 'svs-shell-v3';
+const CACHE_NAME = 'svs-shell-v4';
 const APP_SHELL_FILES = [
   './',
   './index.html',

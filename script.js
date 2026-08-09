@@ -706,6 +706,39 @@ const ProjectListView = {
    RENDER: TIMELINE
    ============================================================ */
 const TimelineView = {
+  /**
+   * Fitur Hapus Project (backport dari Sales App GBP, Ags 2026).
+   * Ini soft delete: project ditandai is_deleted di server (masuk "Sampah"),
+   * BUKAN dihapus permanen. Hapus permanen (+ bersihkan foto Cloudinary)
+   * cuma bisa dilakukan super_admin nanti lewat Manager Dashboard.
+   */
+  initDeleteButton() {
+    const btn = document.getElementById('btn-delete-project');
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      if (!State.currentProjectId) return;
+      const confirmed = confirm('Hapus project "' + State.currentProjectName + '"?\n\nProject akan dipindahkan ke Sampah (bisa dipulihkan oleh Super Admin). Foto & riwayat aktivitas TIDAK ikut terhapus dari sini.');
+      if (!confirmed) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Menghapus...';
+
+      try {
+        const result = await Api.rawCall('deleteProject', { project_id: State.currentProjectId });
+        if (!result.success) throw new Error(result.message || 'Gagal menghapus project');
+
+        Snackbar.show('Project dipindahkan ke Sampah', 'success');
+        State.projectsCache = State.projectsCache.filter((p) => p.project_id !== State.currentProjectId);
+        Router.goTo('projects');
+      } catch (err) {
+        Snackbar.show('Gagal menghapus project: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🗑️ Hapus Project';
+      }
+    });
+  },
+
   async open(projectId, projectName, address, stage, productType, constructionStage) {
     State.currentProjectId = projectId;
     State.currentProjectName = projectName;
@@ -1354,6 +1387,17 @@ const Router = {
 /* ============================================================
    LOGIN
    ============================================================ */
+/* ============================================================
+   LOGIN
+   ============================================================
+   Remember Me (diperbaiki Ags 2026): sebelumnya cuma menyimpan ulang
+   email, bukan mempertahankan sesi login sungguhan. Sekarang pakai
+   pola yang sama seperti Manager Dashboard & Sales App GBP — simpan
+   REFRESH TOKEN Firebase, bukan cuma email, supaya sesi benar-benar
+   bertahan lintas tutup-buka browser/HP sampai tap "Keluar".
+   ============================================================ */
+const REFRESH_TOKEN_KEY = 'svs_aluve_refresh_token';
+
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
@@ -1363,8 +1407,6 @@ async function doLogin() {
   errorEl.textContent = '';
 
   if (!email || !password) { errorEl.textContent = 'Isi email dan password.'; return; }
-
-  handleRememberMe(email);
 
   btn.disabled = true;
   btn.innerHTML = '<span class="snackbar-spinner"></span> Logging in...';
@@ -1381,8 +1423,27 @@ async function doLogin() {
 
     const profileResult = await Api.rawCall('readMyProfile', {});
     if (!profileResult.success) throw new Error(profileResult.message || 'Gagal memuat profil');
+
+    // Kunci akses: app Aluve cuma boleh dimasuki akun yang business_id-nya
+    // "aluve" — akun GBP ditolak di sini, supaya tidak ketuker lihat data
+    // bisnis lain lewat app yang salah. Berlaku untuk semua role.
+    if (profileResult.data.business_id !== 'aluve') {
+      State.idToken = null;
+      throw new Error('Akun ini terdaftar untuk bisnis GBP, bukan Aluve. Gunakan akun khusus Aluve, atau minta Super Admin membuatkan lewat Manager Dashboard.');
+    }
+
     State.user = profileResult.data;
     if (!State.user.email) State.user.email = email;
+
+    // Remember Me sungguhan: simpan refresh token (bukan cuma email)
+    // supaya lain kali buka app, sesi login otomatis dipulihkan diam-diam.
+    if (document.getElementById('login-remember').checked) {
+      localStorage.setItem('svs_remembered_email', email);
+      localStorage.setItem(REFRESH_TOKEN_KEY, json.refreshToken);
+    } else {
+      localStorage.removeItem('svs_remembered_email');
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
 
     document.getElementById('view-login').hidden = true;
     document.getElementById('app').hidden = false;
@@ -1433,6 +1494,44 @@ document.getElementById('link-forgot-password').addEventListener('click', async 
   }
 });
 
+/**
+ * Tukar refresh token tersimpan dengan idToken baru — dipanggil sekali
+ * saat app dibuka (sebelum splash selesai) kalau ada sesi tersimpan.
+ * Return true kalau berhasil login otomatis, false kalau sesi sudah
+ * tidak berlaku (refresh token akan dihapus supaya tidak dicoba lagi).
+ */
+async function trySilentLogin() {
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch('https://securetoken.googleapis.com/v1/token?key=' + FIREBASE_API_KEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken })
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error('Sesi tersimpan sudah tidak berlaku');
+
+    State.idToken = json.id_token;
+    // Google merotasi refresh token tiap dipakai — simpan yang baru
+    localStorage.setItem(REFRESH_TOKEN_KEY, json.refresh_token);
+
+    const profileResult = await Api.rawCall('readMyProfile', {});
+    if (!profileResult.success) throw new Error('Profil tidak ditemukan');
+    if (profileResult.data.business_id !== 'aluve') throw new Error('Akun tersimpan bukan akun Aluve');
+    State.user = profileResult.data;
+
+    document.getElementById('view-login').hidden = true;
+    document.getElementById('app').hidden = false;
+    initApp();
+    return true;
+  } catch (err) {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem('svs_remembered_email');
+    return false;
+  }
+}
+
 /* ============================================================
    SPLASH SCREEN & LOGIN UX — Aug 2026
    ============================================================ */
@@ -1440,16 +1539,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const splash = document.getElementById('view-splash');
   const loginView = document.getElementById('view-login');
 
-  setTimeout(() => {
-    if (splash) splash.hidden = true;
-    if (loginView) loginView.hidden = false;
+  const rememberedEmail = localStorage.getItem('svs_remembered_email');
+  const emailInput = document.getElementById('login-email');
+  const rememberBox = document.getElementById('login-remember');
+  if (rememberedEmail && emailInput && rememberBox) {
+    emailInput.value = rememberedEmail;
+    rememberBox.checked = true;
+  }
 
-    const rememberedEmail = localStorage.getItem('svs_remembered_email');
-    const emailInput = document.getElementById('login-email');
-    const rememberBox = document.getElementById('login-remember');
-    if (rememberedEmail && emailInput && rememberBox) {
-      emailInput.value = rememberedEmail;
-      rememberBox.checked = true;
+  setTimeout(async () => {
+    if (splash) splash.hidden = true;
+
+    // Kalau ada sesi tersimpan (Remember Me dicentang sebelumnya), coba
+    // login otomatis diam-diam DULU sebelum menampilkan form login —
+    // supaya Remember Me benar-benar mempertahankan sesi.
+    const hasSession = localStorage.getItem(REFRESH_TOKEN_KEY);
+    if (hasSession) {
+      const ok = await trySilentLogin();
+      if (!ok && loginView) loginView.hidden = false;
+    } else if (loginView) {
+      loginView.hidden = false;
     }
   }, 1300);
 
@@ -1461,16 +1570,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-// Simpan/hapus email "Remember me" — dipanggil dari dalam doLogin()
-function handleRememberMe(email) {
-  const rememberBox = document.getElementById('login-remember');
-  if (rememberBox && rememberBox.checked) {
-    localStorage.setItem('svs_remembered_email', email);
-  } else {
-    localStorage.removeItem('svs_remembered_email');
-  }
-}
 
 /* ============================================================
    INIT (dipanggil SETELAH login berhasil)
@@ -1490,9 +1589,11 @@ function initApp() {
   safeInit('FilterSheet', () => FilterSheet.init());
   safeInit('NotificationSheet', () => NotificationSheet.init());
   safeInit('ProfileView', () => ProfileView.init());
+  safeInit('TimelineView (delete button)', () => TimelineView.initDeleteButton());
 
   document.getElementById('btn-logout').addEventListener('click', () => {
     State.idToken = null; State.user = null;
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     document.getElementById('app').hidden = true;
     document.getElementById('view-login').hidden = false;
     document.getElementById('login-password').value = '';

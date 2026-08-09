@@ -281,6 +281,8 @@ h1, h2, h3, p { margin: 0; }
 
 .primary-button { background: var(--color-secondary); color: #1A1300; font-weight: 700; font-size: 14.5px; padding: 14px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; gap: 8px; }
 .primary-button:active { background: #D68A0E; }
+.danger-button { background: var(--color-danger-soft); color: var(--color-danger); font-weight: 700; font-size: 13px; padding: 11px 14px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--color-danger-soft); }
+.danger-button:active { background: var(--color-danger); color: #fff; }
 .secondary-button { background: var(--color-surface-alt); color: var(--color-text-primary); font-weight: 600; font-size: 13px; padding: 11px 14px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--color-border); }
 .full-width { width: 100%; }
 .sticky-bottom { position: sticky; bottom: 12px; margin-top: var(--space-md); }
