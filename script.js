@@ -140,7 +140,7 @@ const LookupRenderer = {
     this.renderSelect('select-activity-type', get('activity_type'), 'Pilih Jenis Aktivitas');
     this.renderSelect('select-activity-type-new', get('activity_type'), null, 'Kunjungan Pertama');
     this.renderSelect('select-pipeline-stage', get('pipeline_stage'), null);
-    this.renderSelect('select-temperature', get('activity_temperature'), '— Tidak diisi —', null, true);
+    this.renderSelect('select-temperature', get('activity_temperature'), '— Tidak diisi —');
     this.renderSelect('select-project-category', get('project_category'), 'Pilih');
     this.renderProductTypeChips(get('product_type'));
     this.renderLostReasonChips(get('lost_reason'));
@@ -472,7 +472,7 @@ const DashboardView = {
       this.renderFollowUps(cached.data.needs_followup || []);
       State.summaryData = cached.data.summary || { today: {}, week: {}, month: {} };
       this.renderSummary(State.selectedSummaryPeriod);
-      this.updateNotificationBadge(cached.data.needs_followup || []);
+      this.updateNotificationBadge(cached.data.needs_followup || [], cached.data.offers_ready || []);
     } else {
       followupEl.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div><p class="loading-container-text">Memuat data</p></div>';
       LoadingIndicator.start(followupEl.querySelector('.loading-container-text'), 'Memuat data');
@@ -495,14 +495,13 @@ const DashboardView = {
     this.renderFollowUps(result.data.needs_followup || []);
     State.summaryData = result.data.summary || { today: {}, week: {}, month: {} };
     this.renderSummary(State.selectedSummaryPeriod);
-    this.updateNotificationBadge(result.data.needs_followup || []);
+    this.updateNotificationBadge(result.data.needs_followup || [], result.data.offers_ready || []);
     DashboardCache.save(result.data);
   },
 
   async loadProjectsForStageGrid() {
-    // Selalu scoped ke akun sendiri di Sales App (server juga sudah
-    // menegakkan ini, ini cuma supaya kode frontend tidak menyesatkan).
-    const payload = { sales_uid: State.user.uid };
+    const payload = {};
+    if (State.user.role === 'sales') payload.sales_uid = State.user.uid;
     const result = await Api.call('filterProject', payload, { noQueue: true }).catch(() => null);
     if (result && result.success) {
       State.projectsCache = result.data || [];
@@ -592,9 +591,10 @@ const DashboardView = {
     document.getElementById('summary-lost').textContent = summary.lost_count || 0;
   },
 
-  updateNotificationBadge(items) {
+  updateNotificationBadge(needsFollowupItems, offersReadyItems) {
+    const total = (needsFollowupItems ? needsFollowupItems.length : 0) + (offersReadyItems ? offersReadyItems.length : 0);
     const badge = document.getElementById('badge-notification-count');
-    if (items.length > 0) { badge.textContent = items.length > 9 ? '9+' : String(items.length); badge.hidden = false; }
+    if (total > 0) { badge.textContent = total > 9 ? '9+' : String(total); badge.hidden = false; }
     else { badge.hidden = true; }
   }
 };
@@ -608,7 +608,8 @@ const ProjectListView = {
     listEl.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div><p class="loading-container-text">Memuat project</p></div>';
     LoadingIndicator.start(listEl.querySelector('.loading-container-text'), 'Memuat project');
 
-    const payload = { sales_uid: State.user.uid };
+    const payload = {};
+    if (State.user.role === 'sales') payload.sales_uid = State.user.uid;
     if (State.filterStage) payload.pipeline_stage = State.filterStage;
     if (State.filterProduct) payload.product_type = State.filterProduct;
 
@@ -1247,13 +1248,34 @@ const NotificationSheet = {
   },
   open() {
     const cached = DashboardCache.get();
-    const items = (cached && cached.data && cached.data.needs_followup) || [];
+    const followupItems = (cached && cached.data && cached.data.needs_followup) || [];
+    const offersReadyItems = (cached && cached.data && cached.data.offers_ready) || [];
     const container = document.getElementById('notification-list');
 
-    if (items.length === 0) {
-      container.innerHTML = '<p class="empty-state">Tidak ada follow up yang jatuh tempo.</p>';
-    } else {
-      container.innerHTML = items.map((item) => {
+    if (followupItems.length === 0 && offersReadyItems.length === 0) {
+      container.innerHTML = '<p class="empty-state">Tidak ada notifikasi baru.</p>';
+      SheetManager.open('sheet-notifications');
+      return;
+    }
+
+    let html = '';
+
+    // Penawaran Siap dari Estimator — belum ada Activity yang dicatat
+    // sejak status berubah, dianggap "belum dilihat" sales.
+    if (offersReadyItems.length > 0) {
+      html += offersReadyItems.map((item) => {
+        const valueText = item.estimated_value ? ('Rp ' + Number(item.estimated_value).toLocaleString('id-ID')) : '';
+        return '<div class="card followup-card today">' +
+          '<h3 class="card-title">📋 ' + item.project_name + '</h3>' +
+          '<p class="card-sub">Penawaran siap dikirim ke klien' + (valueText ? ' — ' + valueText : '') + '</p>' +
+          '<div class="followup-card-action" data-notif-open-timeline="' + item.project_id + '" data-notif-project-name="' + item.project_name + '">Lihat Detail ' + Icons.arrowRight + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    // Follow-up jatuh tempo (sudah ada sebelumnya)
+    if (followupItems.length > 0) {
+      html += followupItems.map((item) => {
         const urgency = item.overdue_days > 0 ? 'overdue' : 'today';
         const label = item.overdue_days > 0 ? 'Terlewat ' + item.overdue_days + ' hari 🔴' : 'Jatuh tempo hari ini';
         return '<div class="card followup-card ' + urgency + '">' +
@@ -1262,14 +1284,31 @@ const NotificationSheet = {
           '<div class="followup-card-action" data-notif-open-activity="' + item.project_id + '" data-notif-project-name="' + item.project_name + '">Catat Aktivitas ' + Icons.arrowRight + '</div>' +
           '</div>';
       }).join('');
-
-      container.querySelectorAll('[data-notif-open-activity]').forEach((el) => {
-        el.addEventListener('click', () => {
-          SheetManager.close('sheet-notifications');
-          UpdateProgressSheet.open(el.dataset.notifOpenActivity, el.dataset.notifProjectName, null);
-        });
-      });
     }
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('[data-notif-open-activity]').forEach((el) => {
+      el.addEventListener('click', () => {
+        SheetManager.close('sheet-notifications');
+        UpdateProgressSheet.open(el.dataset.notifOpenActivity, el.dataset.notifProjectName, null);
+      });
+    });
+
+    // "Penawaran Siap" arahkan ke Timeline (bukan langsung form Catat
+    // Aktivitas) — supaya sales lihat dulu detail lengkapnya, baru putuskan
+    // mau kontak klien dulu atau langsung catat aktivitas.
+    container.querySelectorAll('[data-notif-open-timeline]').forEach((el) => {
+      el.addEventListener('click', () => {
+        SheetManager.close('sheet-notifications');
+        const cachedProject = (State.projectsCache || []).find((p) => p.project_id === el.dataset.notifOpenTimeline);
+        TimelineView.open(
+          el.dataset.notifOpenTimeline, el.dataset.notifProjectName,
+          cachedProject ? cachedProject.location_address : '', 'Penawaran Siap',
+          cachedProject ? cachedProject.product_type : '', cachedProject ? cachedProject.construction_stage : ''
+        );
+      });
+    });
 
     SheetManager.open('sheet-notifications');
   }
