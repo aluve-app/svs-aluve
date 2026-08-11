@@ -500,8 +500,9 @@ const DashboardView = {
   },
 
   async loadProjectsForStageGrid() {
-    const payload = {};
-    if (State.user.role === 'sales') payload.sales_uid = State.user.uid;
+    // Selalu scoped ke akun sendiri di Sales App (server juga sudah
+    // menegakkan ini, ini cuma supaya kode frontend tidak menyesatkan).
+    const payload = { sales_uid: State.user.uid };
     const result = await Api.call('filterProject', payload, { noQueue: true }).catch(() => null);
     if (result && result.success) {
       State.projectsCache = result.data || [];
@@ -607,8 +608,7 @@ const ProjectListView = {
     listEl.innerHTML = '<div class="loading-container"><div class="loading-spinner"></div><p class="loading-container-text">Memuat project</p></div>';
     LoadingIndicator.start(listEl.querySelector('.loading-container-text'), 'Memuat project');
 
-    const payload = {};
-    if (State.user.role === 'sales') payload.sales_uid = State.user.uid;
+    const payload = { sales_uid: State.user.uid };
     if (State.filterStage) payload.pipeline_stage = State.filterStage;
     if (State.filterProduct) payload.product_type = State.filterProduct;
 
