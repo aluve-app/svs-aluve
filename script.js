@@ -1688,3 +1688,39 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+
+/* ============================================================
+   TOMBOL BACK HP: TEKAN 2X UNTUK KELUAR (Ags 2026)
+   ============================================================
+   Sebelumnya, 1x tekan tombol back HP langsung keluar dari app/
+   browser tanpa peringatan — gampang kepencet tidak sengaja.
+   Sekarang: tekan pertama cuma tampilkan peringatan (snackbar),
+   tekan KEDUA dalam waktu 2 detik baru benar-benar keluar.
+   ============================================================ */
+(function initBackButtonExitGuard() {
+  let lastBackPressAt = 0;
+  const EXIT_CONFIRM_WINDOW_MS = 2000;
+
+  // "Bantalan" — supaya selalu ada 1 riwayat browser ekstra untuk ditangkap
+  // sebelum benar-benar keluar dari halaman/app.
+  history.pushState({ svsBackGuard: true }, '');
+
+  window.addEventListener('popstate', () => {
+    const now = Date.now();
+
+    if (now - lastBackPressAt < EXIT_CONFIRM_WINDOW_MS) {
+      // Tekan KEDUA dalam jendela waktu -> biarkan navigasi keluar
+      // berjalan alami, JANGAN pasang bantalan lagi.
+      return;
+    }
+
+    // Tekan PERTAMA -> pasang lagi bantalannya (supaya belum benar-benar
+    // keluar), catat waktunya, kasih tahu user harus tekan sekali lagi.
+    lastBackPressAt = now;
+    history.pushState({ svsBackGuard: true }, '');
+
+    if (typeof Snackbar !== 'undefined' && Snackbar.el) {
+      Snackbar.show('Tekan sekali lagi untuk keluar', null, 2000);
+    }
+  });
+})();
