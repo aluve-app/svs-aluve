@@ -1,1 +1,8 @@
-
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.aluve_app.twa",
+        "sha256_cert_fingerprints": ["7D:2B:0B:E5:CB:1B:14:94:6B:8D:82:3A:3C:10:3E:5B:FB:C3:B4:BF:AB:B4:5D:BC:DD:C7:E3:E0:4B:CB:21:DE"]
+      }
+    }]
