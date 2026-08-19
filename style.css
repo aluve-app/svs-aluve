@@ -205,7 +205,9 @@ h1, h2, h3, p { margin: 0; }
 .followup-card { border-left: 3px solid var(--color-success); cursor: pointer; }
 .followup-card.overdue { border-left-color: var(--color-danger); }
 .followup-card.today { border-left-color: var(--color-warning); }
-.followup-card-action { margin-top: 8px; font-size: 12.5px; font-weight: 700; color: var(--color-primary); display: flex; align-items: center; gap: 4px; }
+.followup-card-actions { display: flex; align-items: center; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+.followup-card-action { font-size: 12.5px; font-weight: 700; color: var(--color-secondary); display: flex; align-items: center; gap: 4px; }
+.followup-card-action-secondary { color: var(--color-text-secondary); }
 
 .glow-success { border-color: var(--color-success); }
 .glow-warning { border-color: var(--color-secondary); }

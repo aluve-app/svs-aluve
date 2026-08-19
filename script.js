@@ -575,12 +575,32 @@ const DashboardView = {
       card.innerHTML =
         '<h3 class="card-title">' + Icons.folder + ' ' + item.project_name + '</h3>' +
         '<p class="card-sub">' + label + '</p>' +
-        '<div class="followup-card-action" data-open-activity="' + item.project_id + '" data-project-name="' + item.project_name + '">Catat Aktivitas ' + Icons.arrowRight + '</div>';
+        '<div class="followup-card-actions">' +
+          '<div class="followup-card-action" data-open-activity="' + item.project_id + '" data-project-name="' + item.project_name + '">Catat Aktivitas ' + Icons.arrowRight + '</div>' +
+          '<div class="followup-card-action followup-card-action-secondary" data-open-detail="' + item.project_id + '" data-project-name="' + item.project_name + '">Detail Project ' + Icons.arrowRight + '</div>' +
+        '</div>';
       container.appendChild(card);
     });
 
     container.querySelectorAll('[data-open-activity]').forEach((el) => {
       el.addEventListener('click', () => UpdateProgressSheet.open(el.dataset.openActivity, el.dataset.projectName, null));
+    });
+
+    // Tombol "Detail Project" — arahkan ke halaman Timeline/detail project
+    // (di situ ada nomor kontak leads utk Telpon/WhatsApp langsung).
+    // Tombol "Catat Aktivitas" di atas TIDAK diubah sama sekali, jadi
+    // algoritma notif hilang setelah aktivitas dicatat tetap sama persis.
+    container.querySelectorAll('[data-open-detail]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const cachedProject = (State.projectsCache || []).find((p) => p.project_id === el.dataset.openDetail);
+        TimelineView.open(
+          el.dataset.openDetail, el.dataset.projectName,
+          cachedProject ? cachedProject.location_address : '',
+          cachedProject ? cachedProject.pipeline_stage : '',
+          cachedProject ? cachedProject.product_type : '',
+          cachedProject ? cachedProject.construction_stage : ''
+        );
+      });
     });
   },
 
@@ -1268,7 +1288,9 @@ const NotificationSheet = {
         return '<div class="card followup-card today">' +
           '<h3 class="card-title">📋 ' + item.project_name + '</h3>' +
           '<p class="card-sub">Penawaran siap dikirim ke klien' + (valueText ? ' — ' + valueText : '') + '</p>' +
-          '<div class="followup-card-action" data-notif-open-timeline="' + item.project_id + '" data-notif-project-name="' + item.project_name + '">Lihat Detail ' + Icons.arrowRight + '</div>' +
+          '<div class="followup-card-actions">' +
+            '<div class="followup-card-action" data-notif-open-timeline="' + item.project_id + '" data-notif-project-name="' + item.project_name + '">Lihat Detail ' + Icons.arrowRight + '</div>' +
+          '</div>' +
           '</div>';
       }).join('');
     }
@@ -1281,7 +1303,9 @@ const NotificationSheet = {
         return '<div class="card followup-card ' + urgency + '">' +
           '<h3 class="card-title">' + Icons.folder + ' ' + item.project_name + '</h3>' +
           '<p class="card-sub">' + label + '</p>' +
-          '<div class="followup-card-action" data-notif-open-activity="' + item.project_id + '" data-notif-project-name="' + item.project_name + '">Catat Aktivitas ' + Icons.arrowRight + '</div>' +
+          '<div class="followup-card-actions">' +
+            '<div class="followup-card-action" data-notif-open-activity="' + item.project_id + '" data-notif-project-name="' + item.project_name + '">Catat Aktivitas ' + Icons.arrowRight + '</div>' +
+          '</div>' +
           '</div>';
       }).join('');
     }
